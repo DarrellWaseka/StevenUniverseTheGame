@@ -1,141 +1,86 @@
-var StevenHealth = 20;
-var score = 0;
-var gameState="play";
+var dog,sadDog,happyDog, database;
+var foodS,foodStock;
+var addFood;
+var foodObj;
 
-function preload()
-{
-      bgimg = loadImage("Images/bgimg.jpg")
-      stevenAnimation=loadImage("Images/steve2.png")
-      jasperImage = loadImage("Images/jasper.png")
-      cookieImage = loadImage("Images/cookie.png");
-      fireImage = loadAnimation("Images/finalfire1.png","Images/finalfire2.png")
-      sadstevenImage = loadImage("Images/stevensad1.jpg")
+//create feed and lastFed variable here
+
+
+function preload(){
+sadDog=loadImage("Dog.png");
+happyDog=loadImage("happy dog.png");
 }
 
-function setup() 
-{
-      createCanvas(1280,650);
-      steven = createSprite(681, 444, 50, 50);
-      jasper = createSprite(243, 472, 60, 60);
-      ground = createSprite(640,535,1280,20);
-      ground.visible= false;
-      
-      steven.addImage("Steven1",stevenAnimation)
-      jasper.addImage("jasper", jasperImage)
-      cookiesgroup = new Group()
-      firesgroup = new Group()
+function setup() {
+  database=firebase.database();
+  createCanvas(1000,400);
 
-      //steven.debug=true;
-      steven.setCollider("rectangle",0,0,140,150);
-    
-     
+  foodObj = new Food();
+
+  foodStock=database.ref('Food');
+  foodStock.on("value",readStock);
+  
+  dog=createSprite(800,200,150,150);
+  dog.addImage(sadDog);
+  dog.scale=0.15;
+
+  //create feed the dog button here
+  
+  addFood=createButton("Add Food");
+  addFood.position(800,95);
+  addFood.mousePressed(addFoods);
+
 }
 
-function draw() 
-{
-  background(bgimg);  
-  drawSprites();
+function draw() {
+  background(46,139,87);
+  foodObj.display();
 
-
-  if(gameState==="play")
-  {
-      if(keyDown("left"))
-      {
-          steven.x = steven.x - 5
-      }
-    
-      if(keyDown("right"))
-      {
-            steven.x = steven.x + 5
-      }
-    
-      if(keyDown("up") && steven.y > 400)
-      {
-          steven.velocityY = - 10;
-      }
-
-      steven.velocityY = steven.velocityY + 0.3;
-
-      spawnCookies()
-      spawnFire()
-
-      if(steven.isTouching(cookiesgroup))
-      {
-            score=score+1;
-            cookiesgroup[0].destroy();
-      }
-
-      if(steven.isTouching(firesgroup))
-      {
-            StevenHealth=StevenHealth-1;
-            firesgroup[0].destroy();
-      }
-
-      if(steven.isTouching(jasper))
-      {
-            StevenHealth=0;
-      }
-
-      if(StevenHealth===0)
-      {
-            gameState="end";
-      }
-    
-
-
-
-
-
+  //write code to read fedtime value from the database 
+  var food_stock_val = foodObj.getFoodStock();
+  if(food_stock_val <= 0){
+      foodObj.updateFoodStock(food_stock_val *0);
+  }else{
+      foodObj.updateFoodStock(food_stock_val -1);
 
   }
-  else if(gameState==="end")
-  {
+  
 
-     background(sadstevenImage)
-     fill("black")
-     textSize(35)
-     text("You Died ! Press Reload Button to Restart", 338 , 116)
-     
-
-  }
-
-
-
-  fill("black")
-  text("HEALTH : "+StevenHealth,1076, 51 );
-  text("SCORE : "+score,1076, 100 );
+  
  
-  steven.collide(ground);
+  //write code to display text lastFed time here
+
+ 
+  drawSprites();
 }
 
-function spawnCookies()
-{
-    if(frameCount%150===0)
-    {
-      cookie = createSprite(random(400,1200), 0, 20, 20);
-      cookie.addImage("cookie", cookieImage);
-      cookie.scale = 0.1;
+//function to read food Stock
+function readStock(data){
+  foodS=data.val();
+  foodObj.updateFoodStock(foodS);
 
-      cookie.velocityY = 6; 
-      cookiesgroup.add(cookie)
-
-
-    }
 }
 
-function spawnFire()
-{
-  if(frameCount%150===0)
-  {
 
-      fireball = createSprite(333,375);
-      fireball.addAnimation("fireimg",fireImage)
-      fireball.scale = 0.5;
+function feedDog(){
+  dog.addImage(happyDog);
 
-      fireball.velocityX=random(2,10);
-      fireball.velocityY=random(-4,4);
+  //write code here to update food stock and last fed time
+  if(lastFed>=12){
 
-      firesgroup.add(fireball)
+  }else if(lastFed===0){
+    text("Last Fed 12AM",350,30)
+  }else{
 
- }
+  }
+
+  
+}
+
+//function to add food in stock
+function addFoods(){
+  foodS++;
+  database.ref('/').update({
+    Food:foodS
+  })
 }
